@@ -35,11 +35,11 @@ class ABSqrtC:
         self._value = a + b * sqrt(c)
 
     @property
-    def add(self) -> Fraction:
+    def add(self) -> _AddFraction:
         return self._add
 
     @property
-    def factor(self) -> Fraction:
+    def factor(self) -> _FactorFraction:
         return self._factor
 
     @property
