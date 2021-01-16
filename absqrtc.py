@@ -20,17 +20,17 @@ class ABSqrtC:
         if c < 0:
             raise ValueError(f"Negative {c=} not yet supported")
 
-        self._add = a
-
         extra_square, c_remainder = _get_square_factors(c)
 
         if c_remainder == 1:
-            self._add += b * extra_square
-            self._factor = Fraction(0)
-            self._radical = 0
+            a += b * extra_square
+            self._factor = _FactorFraction(0)
+            self._radical = 1
         else:
-            self._factor = b * extra_square
+            self._factor = _FactorFraction(b * extra_square)
             self._radical = c_remainder
+
+        self._add = _AddFraction(a)
 
         self._value = a + b * sqrt(c)
 
@@ -51,7 +51,7 @@ class ABSqrtC:
         return self._value
 
     def __str__(self) -> str:
-        string = _fraction_2_str(self._add)
+        string = str(self._add)
 
         if not self._factor:
             return string
@@ -59,7 +59,7 @@ class ABSqrtC:
         string += f" + " if self._factor > 0 else f" - "
 
         if (abs_factor := abs(self._factor)) != 1:
-            string += f"{_fraction_2_str(abs_factor)} * "
+            string += f"{abs_factor} * "
 
         return string + f"√{self._radical}"
 
@@ -83,32 +83,28 @@ class ABSqrtC:
         return bool(self._value)
 
     def __add__(self, other: ABSqrtC) -> ABSqrtC:
-        self._check_same_radical(other)
-        return ABSqrtC(
-            self._add + other._add, self._factor + other._factor, self._radical
-        )
+        radical = self._check_same_radical(other)
+        return ABSqrtC(self._add + other._add, self._factor + other._factor, radical)
 
     def __sub__(self, other: ABSqrtC) -> ABSqrtC:
-        self._check_same_radical(other)
-        return ABSqrtC(
-            self._add - other._add, self._factor - other.factor, self._radical
-        )
+        radical = self._check_same_radical(other)
+        return ABSqrtC(self._add - other._add, self._factor - other.factor, radical)
 
     def __mul__(self, other: ABSqrtC) -> ABSqrtC:
-        self._check_same_radical(other)
+        radical = self._check_same_radical(other)
         return ABSqrtC(
-            _mul_add(self._add, other._add, self._factor, other._factor, self._radical),
+            _mul_add(self._add, other._add, self._factor, other._factor, radical),
             _mul_factor(self._add, other._add, self._factor, other._factor),
             self._radical,
         )
 
     def __truediv__(self, other: ABSqrtC) -> ABSqrtC:
-        self._check_same_radical(other)
+        radical = self._check_same_radical(other)
         denominator = _mul_add(
-            other._add, other._add, other._factor, -other._factor, self._radical
+            other._add, other._add, other._factor, -other._factor, radical
         )
         return ABSqrtC(
-            _mul_add(self._add, other._add, self._factor, -other._factor, self._radical)
+            _mul_add(self._add, other._add, self._factor, -other._factor, radical)
             / denominator,
             _mul_factor(self._add, other._add, self._factor, -other._factor)
             / denominator,
@@ -172,12 +168,17 @@ class ABSqrtC:
     def conjugate(self) -> ABSqrtC:
         return ABSqrtC(self._add, -self._factor, self._radical)
 
-    def _check_same_radical(self, other: ABSqrtC) -> None:
+    def _check_same_radical(self, other: ABSqrtC) -> int:
         """"""
-        if self._radical != other._radical:
-            raise ValueError(
-                f"Add different radicals ({self._radical} and {other._radical}) not yet supported"
-            )
+        if self._radical == 1:
+            return other._radical
+        if other._radical == 1:
+            return self._radical
+        if self._radical == other._radical:
+            return self._radical
+        raise ValueError(
+            f"Add different radicals ({self._radical} and {other._radical}) not yet supported"
+        )
 
 
 class _BeauFraction(Fraction):
@@ -200,34 +201,44 @@ class _BeauFraction(Fraction):
         return string
 
 
+class _AddFraction(_BeauFraction):
+    """
+    Fraction for addition part, mainly for type annotation
+    """
+
+
+class _FactorFraction(_BeauFraction):
+    """
+    Fraction for factor part, mainly for type annotation
+    """
+
+    def __neg__(self) -> _FactorFraction:
+        return _FactorFraction(super().__neg__())
+
+
 def _mul_add(
-    add1: Fraction, add2: Fraction, factor1: Fraction, factor2: Fraction, radical: int
-) -> Fraction:
-    """"""
-    return add1 * add2 + factor1 * factor2 * radical
+    add1: _AddFraction,
+    add2: _AddFraction,
+    factor1: _FactorFraction,
+    factor2: _FactorFraction,
+    radical: int,
+) -> _AddFraction:
+    """
+    Get the addition part of the multiplied number
+    """
+    return _AddFraction(add1 * add2 + factor1 * factor2 * radical)
 
 
 def _mul_factor(
-    add1: Fraction, add2: Fraction, factor1: Fraction, factor2: Fraction
-) -> Fraction:
-    """"""
-    return add1 * factor2 + add2 * factor1
-
-
-def _fraction_2_str(fraction: Fraction) -> str:
-    """"""
-    string = ""
-    if fraction < 0:
-        string += "- "
-
-    fraction = abs(fraction)
-
-    string += f"{fraction.numerator}"
-
-    if (denominator := fraction.denominator) > 1:
-        string += f" / {denominator}"
-
-    return string
+    add1: _AddFraction,
+    add2: _AddFraction,
+    factor1: _FactorFraction,
+    factor2: _FactorFraction,
+) -> _FactorFraction:
+    """
+    Get the factor part of the multiplied number
+    """
+    return _FactorFraction(add1 * factor2 + add2 * factor1)
 
 
 def _get_square_factors(n: int) -> tuple[int, int]:
