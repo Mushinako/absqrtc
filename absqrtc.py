@@ -83,32 +83,28 @@ class ABSqrtC:
         return bool(self._value)
 
     def __add__(self, other: ABSqrtC) -> ABSqrtC:
-        radical = self._check_same_radical(other)
+        radical = self._get_common_radical(other)
         return ABSqrtC(self._add + other._add, self._factor + other._factor, radical)
 
     def __sub__(self, other: ABSqrtC) -> ABSqrtC:
-        radical = self._check_same_radical(other)
+        radical = self._get_common_radical(other)
         return ABSqrtC(self._add - other._add, self._factor - other.factor, radical)
 
     def __mul__(self, other: ABSqrtC) -> ABSqrtC:
-        radical = self._check_same_radical(other)
+        radical = self._get_common_radical(other)
         return ABSqrtC(
-            _mul_add(self._add, other._add, self._factor, other._factor, radical),
-            _mul_factor(self._add, other._add, self._factor, other._factor),
-            self._radical,
+            self._mul_add(other._add, other._factor, radical),
+            self._mul_factor(other._add, other._factor),
+            radical,
         )
 
     def __truediv__(self, other: ABSqrtC) -> ABSqrtC:
-        radical = self._check_same_radical(other)
-        denominator = _mul_add(
-            other._add, other._add, other._factor, -other._factor, radical
-        )
+        radical = self._get_common_radical(other)
+        denominator = other._mul_add(other._add, -other._factor, other._radical)
         return ABSqrtC(
-            _mul_add(self._add, other._add, self._factor, -other._factor, radical)
-            / denominator,
-            _mul_factor(self._add, other._add, self._factor, -other._factor)
-            / denominator,
-            self.radical,
+            self._mul_add(other._add, -other._factor, radical) / denominator,
+            self._mul_factor(other._add, -other._factor) / denominator,
+            radical,
         )
 
     def __pow__(self, power: int) -> ABSqrtC:
@@ -117,14 +113,14 @@ class ABSqrtC:
 
         for _ in range(power - 1):
             add, factor = (
-                _mul_add(add, self._add, factor, self._factor, self._radical),
-                _mul_factor(add, self._add, factor, self._factor),
+                self._mul_add(add, factor, self._radical),
+                self._mul_factor(add, factor),
             )
 
         return ABSqrtC(add, factor, self._radical)
 
     def __neg__(self) -> ABSqrtC:
-        return ABSqrtC(-self._add, -self._factor, self.radical)
+        return ABSqrtC(-self._add, -self._factor, self._radical)
 
     def __abs__(self) -> ABSqrtC:
         return self if self._value >= 0 else -self
@@ -166,10 +162,15 @@ class ABSqrtC:
         return ceil(self._value)
 
     def conjugate(self) -> ABSqrtC:
+        """
+        Get the radical conjugate
+        """
         return ABSqrtC(self._add, -self._factor, self._radical)
 
-    def _check_same_radical(self, other: ABSqrtC) -> int:
-        """"""
+    def _get_common_radical(self, other: ABSqrtC) -> int:
+        """
+        Get common radicals of 2 ABSqrtC numbers
+        """
         if self._radical == 1:
             return other._radical
         if other._radical == 1:
@@ -179,6 +180,24 @@ class ABSqrtC:
         raise ValueError(
             f"Add different radicals ({self._radical} and {other._radical}) not yet supported"
         )
+
+    def _mul_add(
+        self, other_add: _AddFraction, other_factor: _FactorFraction, radical: int
+    ) -> _AddFraction:
+        """
+        Get the addition part of the multiplied number
+        """
+        return _AddFraction(
+            self._add * other_add + self._factor * other_factor * radical
+        )
+
+    def _mul_factor(
+        self, other_add: _AddFraction, other_factor: _FactorFraction
+    ) -> _FactorFraction:
+        """
+        Get the factor part of the multiplied number
+        """
+        return _FactorFraction(self._add * other_factor + self._factor * other_add)
 
 
 class _BeauFraction(Fraction):
@@ -214,31 +233,6 @@ class _FactorFraction(_BeauFraction):
 
     def __neg__(self) -> _FactorFraction:
         return _FactorFraction(super().__neg__())
-
-
-def _mul_add(
-    add1: _AddFraction,
-    add2: _AddFraction,
-    factor1: _FactorFraction,
-    factor2: _FactorFraction,
-    radical: int,
-) -> _AddFraction:
-    """
-    Get the addition part of the multiplied number
-    """
-    return _AddFraction(add1 * add2 + factor1 * factor2 * radical)
-
-
-def _mul_factor(
-    add1: _AddFraction,
-    add2: _AddFraction,
-    factor1: _FactorFraction,
-    factor2: _FactorFraction,
-) -> _FactorFraction:
-    """
-    Get the factor part of the multiplied number
-    """
-    return _FactorFraction(add1 * factor2 + add2 * factor1)
 
 
 def _get_square_factors(n: int) -> tuple[int, int]:
