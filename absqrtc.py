@@ -180,6 +180,26 @@ class ABSqrtC:
             )
 
 
+class _BeauFraction(Fraction):
+    """
+    Beautiful fraction, with proper `__str__`
+    """
+
+    def __str__(self) -> str:
+        string = ""
+        if self < 0:
+            string += "- "
+
+        abs_self = abs(self)
+
+        string += f"{abs_self.numerator}"
+
+        if (denominator := abs_self.denominator) > 1:
+            string += f" / {denominator}"
+
+        return string
+
+
 def _mul_add(
     add1: Fraction, add2: Fraction, factor1: Fraction, factor2: Fraction, radical: int
 ) -> Fraction:
