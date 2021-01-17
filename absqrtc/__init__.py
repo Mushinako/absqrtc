@@ -5,6 +5,7 @@ Module: `a + b sqrt(c)` object
 from __future__ import annotations
 
 from fractions import Fraction
+from functools import cached_property
 from itertools import count
 from math import ceil, floor, sqrt, trunc
 from typing import Union, overload
@@ -63,6 +64,31 @@ class ABSqrtC:
     def value(self) -> float:
         return self._value
 
+    @cached_property
+    def conjugate(self) -> ABSqrtC:
+        """
+        Get the radical conjugate
+        """
+        return ABSqrtC(self._add, -self._factor, self._radical)
+
+    @cached_property
+    def conjugate_product(self) -> Fraction:
+        """
+        Get product with its conjugate
+        """
+        return self._add * self._add - self._factor * self._factor * self._radical
+
+    @cached_property
+    def inverse(self) -> ABSqrtC:
+        """
+        Get multiplicative inverse (1/self)
+        """
+        return ABSqrtC(
+            self._add / self.conjugate_product,
+            -self._factor / self.conjugate_product,
+            self.radical,
+        )
+
     def __str__(self) -> str:
         string = str(self._add)
 
@@ -87,7 +113,11 @@ class ABSqrtC:
         )
 
     def __ne__(self, other: ABSqrtC) -> bool:
-        return not self == other
+        return (
+            self._add != other._add
+            or self._factor != other._factor
+            or self._radical != other._radical
+        )
 
     def __lt__(self, other: ABSqrtC) -> bool:
         return self._value < other._value
@@ -102,20 +132,29 @@ class ABSqrtC:
         return self._value >= other._value
 
     def __hash__(self) -> int:
-        return hash(self._value)
+        return hash((self._add, self._factor, self._radical))
 
     def __bool__(self) -> bool:
         return bool(self._value)
 
-    def __add__(self, other: ABSqrtC) -> ABSqrtC:
+    def __add__(self, other: Union[ABSqrtC, Fraction, int]) -> ABSqrtC:
+        if not isinstance(other, ABSqrtC):
+            return ABSqrtC(self._add + other, self._factor, self._radical)
+
         radical = self._get_common_radical(other)
         return ABSqrtC(self._add + other._add, self._factor + other._factor, radical)
 
-    def __sub__(self, other: ABSqrtC) -> ABSqrtC:
+    def __sub__(self, other: Union[ABSqrtC, Fraction, int]) -> ABSqrtC:
+        if not isinstance(other, ABSqrtC):
+            return ABSqrtC(self._add - other, self._factor, self._radical)
+
         radical = self._get_common_radical(other)
         return ABSqrtC(self._add - other._add, self._factor - other.factor, radical)
 
-    def __mul__(self, other: ABSqrtC) -> ABSqrtC:
+    def __mul__(self, other: Union[ABSqrtC, Fraction, int]) -> ABSqrtC:
+        if not isinstance(other, ABSqrtC):
+            return ABSqrtC(self._add * other, self._factor * other, self._radical)
+
         radical = self._get_common_radical(other)
         return ABSqrtC(
             self._mul_add(other._add, other._factor, radical),
@@ -123,12 +162,15 @@ class ABSqrtC:
             radical,
         )
 
-    def __truediv__(self, other: ABSqrtC) -> ABSqrtC:
+    def __truediv__(self, other: Union[ABSqrtC, Fraction, int]) -> ABSqrtC:
+        if not isinstance(other, ABSqrtC):
+            return ABSqrtC(self._add / other, self._factor / other, self._radical)
+
         radical = self._get_common_radical(other)
-        denominator = other._mul_add(other._add, -other._factor, other._radical)
         return ABSqrtC(
-            self._mul_add(other._add, -other._factor, radical) / denominator,
-            self._mul_factor(other._add, -other._factor) / denominator,
+            self._mul_add(other._add, -other._factor, radical)
+            / other.conjugate_product,
+            self._mul_factor(other._add, -other._factor) / other.conjugate_product,
             radical,
         )
 
@@ -144,6 +186,25 @@ class ABSqrtC:
 
         return ABSqrtC(add, factor, self._radical)
 
+    def __radd__(self, other: Union[Fraction, int]) -> ABSqrtC:
+        return ABSqrtC(self._add + other, self._factor, self._radical)
+
+    def __rsub__(self, other: Union[Fraction, int]) -> ABSqrtC:
+        return ABSqrtC(other - self._add, -self._factor, self._radical)
+
+    def __rmul__(self, other: Union[Fraction, int]) -> ABSqrtC:
+        return ABSqrtC(self._add * other, self._factor * other, self._radical)
+
+    def __rtruediv__(self, other: Union[Fraction, int]) -> ABSqrtC:
+        return ABSqrtC(
+            self._add * other / self.conjugate_product,
+            -self._factor * other / self.conjugate_product,
+            self._radical,
+        )
+
+    def __pos__(self) -> ABSqrtC:
+        return self
+
     def __neg__(self) -> ABSqrtC:
         return ABSqrtC(-self._add, -self._factor, self._radical)
 
@@ -151,7 +212,7 @@ class ABSqrtC:
         return self if self._value >= 0 else -self
 
     def __invert__(self) -> ABSqrtC:
-        return self.conjugate()
+        return self.conjugate
 
     def __complex__(self) -> complex:
         return complex(self._value)
@@ -185,12 +246,6 @@ class ABSqrtC:
 
     def __ceil__(self) -> int:
         return ceil(self._value)
-
-    def conjugate(self) -> ABSqrtC:
-        """
-        Get the radical conjugate
-        """
-        return ABSqrtC(self._add, -self._factor, self._radical)
 
     def _get_common_radical(self, other: ABSqrtC) -> int:
         """
@@ -228,7 +283,9 @@ class ABSqrtC:
     def _parse_args(
         *args: Union[Fraction, int]
     ) -> tuple[Union[Fraction, int], Union[Fraction, int], int]:
-        """"""
+        """
+        Parse function arguments
+        """
         func_name = "__init__"
 
         if len(args) == 2:

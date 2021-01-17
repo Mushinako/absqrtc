@@ -98,6 +98,7 @@ class TestCalculationsBinary:
         assert t1 + t3 == ABSqrtC(5, 5, 7)
         assert t2 + t3 == ABSqrtC(6, 0, 1)
         assert t2 + t4 == ABSqrtC(6, 5, 7)
+        assert t3 + 1 == ABSqrtC(4, 5, 7)
 
     def test_sub(self):
         t1 = ABSqrtC(2, 0, 1)
@@ -113,6 +114,7 @@ class TestCalculationsBinary:
         assert t1 - t3 == ABSqrtC(-1, -5, 7)
         assert t2 - t3 == ABSqrtC(0, -10, 7)
         assert t2 - t4 == ABSqrtC(1, 5, 7)
+        assert t3 - 1 == ABSqrtC(2, 5, 7)
 
     def test_mul(self):
         t1 = ABSqrtC(2, 0, 1)
@@ -128,6 +130,7 @@ class TestCalculationsBinary:
         assert t1 * t3 == ABSqrtC(6, 10, 7)
         assert t2 * t3 == ABSqrtC(-166, 0, 1)
         assert t2 * t4 == ABSqrtC(-344, 20, 7)
+        assert t3 * 2 == ABSqrtC(6, 10, 7)
 
     def test_truediv(self):
         t1 = ABSqrtC(2, 0, 1)
@@ -144,6 +147,27 @@ class TestCalculationsBinary:
         assert t1 / t3 == ABSqrtC(Fraction(-3, 83), Fraction(5, 83), 7)
         assert t2 / t3 == ABSqrtC(Fraction(-92, 83), Fraction(15, 83), 7)
         assert t2 / t4 == ABSqrtC(Fraction(-89, 174), Fraction(5, 87), 7)
+        assert t3 / 2 == ABSqrtC(Fraction(3, 2), Fraction(5, 2), 7)
+
+    def test_pow(self):
+        t1 = ABSqrtC(-1, 1, 2)
+
+        assert t1 ** 2 == ABSqrtC(3, -2, 2)
+        assert t1 ** 3 == ABSqrtC(-7, 5, 2)
+        assert t1 ** 5 == ABSqrtC(-41, 29, 2)
+        assert t1 ** 10 == ABSqrtC(3363, -2378, 2)
+
+    def test_radd(self):
+        assert 1 + ABSqrtC(3, 5, 7) == ABSqrtC(4, 5, 7)
+
+    def test_rsub(self):
+        assert 1 - ABSqrtC(3, 5, 7) == ABSqrtC(-2, -5, 7)
+
+    def test_rmul(self):
+        assert 2 * ABSqrtC(3, 5, 7) == ABSqrtC(6, 10, 7)
+
+    def test_rtruediv(self):
+        assert 2 / ABSqrtC(3, 5, 7) == ABSqrtC(Fraction(-3, 83), Fraction(5, 83), 7)
 
     def test_pow(self):
         t1 = ABSqrtC(-1, 1, 2)
@@ -165,4 +189,12 @@ class TestCalculationsUnary:
     def test_invert_conjugate(self):
         t1 = ABSqrtC(1, 1, 2)
 
-        assert ~t1 == t1.conjugate() == ABSqrtC(1, -1, 2)
+        assert ~t1 == t1.conjugate == ABSqrtC(1, -1, 2)
+
+    def test_conjugate_product(self):
+        assert ABSqrtC(1, 1, 2).conjugate_product == -1
+        assert ABSqrtC(4, 2, 3).conjugate_product == 4
+
+    def test_inverse(self):
+        assert ABSqrtC(1, 1, 2).inverse == ABSqrtC(-1, 1, 2)
+        assert ABSqrtC(4, 2, 3).inverse == ABSqrtC(1, -Fraction(1 / 2), 3)
