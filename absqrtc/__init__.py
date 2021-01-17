@@ -5,34 +5,47 @@ Module: `a + b sqrt(c)` object
 from __future__ import annotations
 
 from fractions import Fraction
-from functools import total_ordering
+from itertools import count
 from math import ceil, floor, sqrt, trunc
-from typing import overload
+from typing import Union, overload
 
 
-@total_ordering
 class ABSqrtC:
     """
     `a + b sqrt(c)` object
     """
 
-    def __init__(self, a: Fraction, b: Fraction, c: int) -> None:
-        if c < 0:
-            raise ValueError(f"Negative {c=} not yet supported")
+    @overload
+    def __init__(self, add: Union[Fraction, int], radical: int, /) -> None:
+        ...
 
-        extra_square, c_remainder = _get_square_factors(c)
+    @overload
+    def __init__(
+        self, add: Union[Fraction, int], factor: Union[Fraction, int], radical: int, /
+    ) -> None:
+        ...
+
+    def __init__(self, *args: Union[Fraction, int]) -> None:
+        add, factor, radical = self._parse_args(*args)
+
+        if radical <= 0:
+            raise ValueError(f"Non-positive {radical=} not yet supported")
+
+        extra_square, c_remainder = _get_square_factors(radical)
 
         if c_remainder == 1:
-            a += b * extra_square
-            self._factor = _FactorFraction(0)
-            self._radical = 1
+            add += factor * extra_square
+            factor = _FactorFraction(0)
+            radical = 1
         else:
-            self._factor = _FactorFraction(b * extra_square)
-            self._radical = c_remainder
+            factor = _FactorFraction(factor * extra_square)
+            radical = c_remainder if factor else 1
 
-        self._add = _AddFraction(a)
+        self._add = _AddFraction(add)
+        self._factor = factor
+        self._radical = radical
 
-        self._value = a + b * sqrt(c)
+        self._value = add + factor * sqrt(radical)
 
     @property
     def add(self) -> _AddFraction:
@@ -64,7 +77,7 @@ class ABSqrtC:
         return string + f"√{self._radical}"
 
     def __repr__(self) -> str:
-        return f"ASqrtB({self.__str__()})"
+        return f"ABSqrtC({self.__str__()})"
 
     def __eq__(self, other: ABSqrtC) -> bool:
         return (
@@ -73,8 +86,20 @@ class ABSqrtC:
             and self._radical == other._radical
         )
 
+    def __ne__(self, other: ABSqrtC) -> bool:
+        return not self == other
+
     def __lt__(self, other: ABSqrtC) -> bool:
         return self._value < other._value
+
+    def __le__(self, other: ABSqrtC) -> bool:
+        return self._value <= other._value
+
+    def __gt__(self, other: ABSqrtC) -> bool:
+        return self._value > other._value
+
+    def __ge__(self, other: ABSqrtC) -> bool:
+        return self._value >= other._value
 
     def __hash__(self) -> int:
         return hash(self._value)
@@ -199,34 +224,44 @@ class ABSqrtC:
         """
         return _FactorFraction(self._add * other_factor + self._factor * other_add)
 
+    @staticmethod
+    def _parse_args(
+        *args: Union[Fraction, int]
+    ) -> tuple[Union[Fraction, int], Union[Fraction, int], int]:
+        """"""
+        func_name = "__init__"
 
-class _BeauFraction(Fraction):
-    """
-    Beautiful fraction, with proper `__str__`
-    """
+        if len(args) == 2:
+            add, radical = args
+            factor = 1
+        elif len(args) == 3:
+            add, factor, radical = args
+        elif len(args) > 3:
+            raise TypeError(
+                f"{func_name}() takes from 2 to 3 positional arguments but {len(args)} was given"
+            )
+        elif len(args) == 1:
+            raise TypeError(
+                f"__init__() missing 1 required positional argument: 'radical'"
+            )
+        else:
+            raise TypeError(
+                f"__init__() missing 2 required positional arguments: 'add' and 'radical'"
+            )
 
-    def __str__(self) -> str:
-        string = ""
-        if self < 0:
-            string += "- "
+        if not isinstance(radical, int):
+            raise TypeError(f"'radical' expected to be an int, got {type(radical)}")
 
-        abs_self = abs(self)
-
-        string += f"{abs_self.numerator}"
-
-        if (denominator := abs_self.denominator) > 1:
-            string += f" / {denominator}"
-
-        return string
+        return add, factor, radical
 
 
-class _AddFraction(_BeauFraction):
+class _AddFraction(Fraction):
     """
     Fraction for addition part, mainly for type annotation
     """
 
 
-class _FactorFraction(_BeauFraction):
+class _FactorFraction(Fraction):
     """
     Fraction for factor part, mainly for type annotation
     """
@@ -241,8 +276,11 @@ def _get_square_factors(n: int) -> tuple[int, int]:
     """
     square_factor: int = 1
 
-    for i in range(2, int(n ** 0.25)):
-        if not n % (square := i * i):
+    for i in count(2):
+        square = i * i
+        if square > n:
+            break
+        while not n % square:
             square_factor *= i
             n //= square
 

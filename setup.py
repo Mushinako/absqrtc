@@ -7,14 +7,14 @@ with open("README.md", "r", encoding="utf-8") as fp:
 
 setuptools.setup(
     name="absqrtc",
-    version="2021.01",
+    version="2021.02",
     author="Mushinako",
     author_email="ridoedee@gmail.com",
     description="a + b sqrt(c) calculations",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Mushinako/absqrtc",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(include=("absqrtc",)),
     package_data={
         "absqrtc": ["*.pyi", "py.typed"],
     },
