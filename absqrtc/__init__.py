@@ -10,7 +10,7 @@ from functools import cached_property
 from itertools import count
 from math import ceil, comb, floor, sqrt, trunc
 from numbers import Real
-from typing import Optional, Union
+from typing import Optional, Union, overload
 
 
 class ABSqrtC:
@@ -312,6 +312,18 @@ class ABSqrtC:
 
     def __int__(self) -> int:
         return int(self._value)
+
+    @overload
+    def __round__(self) -> int:
+        ...
+
+    @overload
+    def __round__(self, ndigits: None) -> int:
+        ...
+
+    @overload
+    def __round__(self, ndigits: int) -> float:
+        ...
 
     def __round__(self, ndigits: Optional[int] = None) -> Union[int, float]:
         return round(self._value, ndigits)
