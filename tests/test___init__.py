@@ -1,4 +1,4 @@
-from fractions import Fraction
+from fractions import Fraction as F
 from math import sqrt
 
 import pytest
@@ -50,7 +50,7 @@ class TestInstance:
         assert str(ABSqrtC(1, 1, 2)) == "1 + √2"
         assert str(ABSqrtC(1, 2, 2)) == "1 + 2 * √2"
         assert str(ABSqrtC(-1, -2, 2)) == "-1 - 2 * √2"
-        assert str(ABSqrtC(Fraction(1, 2), Fraction(1, 2), 2)) == "1/2 + 1/2 * √2"
+        assert str(ABSqrtC(F(1, 2), F(1, 2), 2)) == "1/2 + 1/2 * √2"
 
 
 class TestComparisons:
@@ -143,11 +143,11 @@ class TestCalculationsBinary:
             t2 / t5
 
         assert t1 / t1 == ABSqrtC(1, 0, 1)
-        assert t2 / t1 == ABSqrtC(Fraction(3, 2), Fraction(-5, 2), 7)
-        assert t1 / t3 == ABSqrtC(Fraction(-3, 83), Fraction(5, 83), 7)
-        assert t2 / t3 == ABSqrtC(Fraction(-92, 83), Fraction(15, 83), 7)
-        assert t2 / t4 == ABSqrtC(Fraction(-89, 174), Fraction(5, 87), 7)
-        assert t3 / 2 == ABSqrtC(Fraction(3, 2), Fraction(5, 2), 7)
+        assert t2 / t1 == ABSqrtC(F(3, 2), F(-5, 2), 7)
+        assert t1 / t3 == ABSqrtC(F(-3, 83), F(5, 83), 7)
+        assert t2 / t3 == ABSqrtC(F(-92, 83), F(15, 83), 7)
+        assert t2 / t4 == ABSqrtC(F(-89, 174), F(5, 87), 7)
+        assert t3 / 2 == ABSqrtC(F(3, 2), F(5, 2), 7)
 
     def test_pow(self):
         t1 = ABSqrtC(-1, 1, 2)
@@ -167,7 +167,7 @@ class TestCalculationsBinary:
         assert 2 * ABSqrtC(3, 5, 7) == ABSqrtC(6, 10, 7)
 
     def test_rtruediv(self):
-        assert 2 / ABSqrtC(3, 5, 7) == ABSqrtC(Fraction(-3, 83), Fraction(5, 83), 7)
+        assert 2 / ABSqrtC(3, 5, 7) == ABSqrtC(F(-3, 83), F(5, 83), 7)
 
     def test_pow(self):
         t1 = ABSqrtC(-1, 1, 2)
@@ -197,4 +197,4 @@ class TestCalculationsUnary:
 
     def test_inverse(self):
         assert ABSqrtC(1, 1, 2).inverse == ABSqrtC(-1, 1, 2)
-        assert ABSqrtC(4, 2, 3).inverse == ABSqrtC(1, -Fraction(1 / 2), 3)
+        assert ABSqrtC(4, 2, 3).inverse == ABSqrtC(1, -F(1 / 2), 3)

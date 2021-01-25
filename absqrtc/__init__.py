@@ -4,7 +4,7 @@ Module: `a + b sqrt(c)` object
 
 from __future__ import annotations
 
-from fractions import Fraction
+from fractions import Fraction as F
 from functools import cached_property
 from itertools import count
 from math import ceil, floor, sqrt, trunc
@@ -17,16 +17,16 @@ class ABSqrtC:
     """
 
     @overload
-    def __init__(self, add: Union[Fraction, int], radical: int, /) -> None:
+    def __init__(self, add: Union[F, int], radical: int, /) -> None:
         ...
 
     @overload
     def __init__(
-        self, add: Union[Fraction, int], factor: Union[Fraction, int], radical: int, /
+        self, add: Union[F, int], factor: Union[F, int], radical: int, /
     ) -> None:
         ...
 
-    def __init__(self, *args: Union[Fraction, int]) -> None:
+    def __init__(self, *args: Union[F, int]) -> None:
         add, factor, radical = self._parse_args(*args)
 
         if radical <= 0:
@@ -72,7 +72,7 @@ class ABSqrtC:
         return ABSqrtC(self._add, -self._factor, self._radical)
 
     @cached_property
-    def conjugate_product(self) -> Fraction:
+    def conjugate_product(self) -> F:
         """
         Get product with its conjugate
         """
@@ -137,21 +137,21 @@ class ABSqrtC:
     def __bool__(self) -> bool:
         return bool(self._value)
 
-    def __add__(self, other: Union[ABSqrtC, Fraction, int]) -> ABSqrtC:
+    def __add__(self, other: Union[ABSqrtC, F, int]) -> ABSqrtC:
         if not isinstance(other, ABSqrtC):
             return ABSqrtC(self._add + other, self._factor, self._radical)
 
         radical = self._get_common_radical(other)
         return ABSqrtC(self._add + other._add, self._factor + other._factor, radical)
 
-    def __sub__(self, other: Union[ABSqrtC, Fraction, int]) -> ABSqrtC:
+    def __sub__(self, other: Union[ABSqrtC, F, int]) -> ABSqrtC:
         if not isinstance(other, ABSqrtC):
             return ABSqrtC(self._add - other, self._factor, self._radical)
 
         radical = self._get_common_radical(other)
         return ABSqrtC(self._add - other._add, self._factor - other.factor, radical)
 
-    def __mul__(self, other: Union[ABSqrtC, Fraction, int]) -> ABSqrtC:
+    def __mul__(self, other: Union[ABSqrtC, F, int]) -> ABSqrtC:
         if not isinstance(other, ABSqrtC):
             return ABSqrtC(self._add * other, self._factor * other, self._radical)
 
@@ -162,7 +162,7 @@ class ABSqrtC:
             radical,
         )
 
-    def __truediv__(self, other: Union[ABSqrtC, Fraction, int]) -> ABSqrtC:
+    def __truediv__(self, other: Union[ABSqrtC, F, int]) -> ABSqrtC:
         if not isinstance(other, ABSqrtC):
             return ABSqrtC(self._add / other, self._factor / other, self._radical)
 
@@ -186,16 +186,16 @@ class ABSqrtC:
 
         return ABSqrtC(add, factor, self._radical)
 
-    def __radd__(self, other: Union[Fraction, int]) -> ABSqrtC:
+    def __radd__(self, other: Union[F, int]) -> ABSqrtC:
         return ABSqrtC(self._add + other, self._factor, self._radical)
 
-    def __rsub__(self, other: Union[Fraction, int]) -> ABSqrtC:
+    def __rsub__(self, other: Union[F, int]) -> ABSqrtC:
         return ABSqrtC(other - self._add, -self._factor, self._radical)
 
-    def __rmul__(self, other: Union[Fraction, int]) -> ABSqrtC:
+    def __rmul__(self, other: Union[F, int]) -> ABSqrtC:
         return ABSqrtC(self._add * other, self._factor * other, self._radical)
 
-    def __rtruediv__(self, other: Union[Fraction, int]) -> ABSqrtC:
+    def __rtruediv__(self, other: Union[F, int]) -> ABSqrtC:
         return ABSqrtC(
             self._add * other / self.conjugate_product,
             -self._factor * other / self.conjugate_product,
@@ -280,9 +280,7 @@ class ABSqrtC:
         return _FactorFraction(self._add * other_factor + self._factor * other_add)
 
     @staticmethod
-    def _parse_args(
-        *args: Union[Fraction, int]
-    ) -> tuple[Union[Fraction, int], Union[Fraction, int], int]:
+    def _parse_args(*args: Union[F, int]) -> tuple[Union[F, int], Union[F, int], int]:
         """
         Parse function arguments
         """
@@ -312,13 +310,13 @@ class ABSqrtC:
         return add, factor, radical
 
 
-class _AddFraction(Fraction):
+class _AddFraction(F):
     """
     Fraction for addition part, mainly for type annotation
     """
 
 
-class _FactorFraction(Fraction):
+class _FactorFraction(F):
     """
     Fraction for factor part, mainly for type annotation
     """
