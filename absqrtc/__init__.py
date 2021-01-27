@@ -27,17 +27,17 @@ class ABSqrtC:
         c: Optional[_InputTypesUnion] = None,
         /,
     ) -> ABSqrtC:
-        frac_a = F(a)
+        frac_a = a if isinstance(a, F) else F(a)
 
         if bc is None:
             frac_b = F(0)
             frac_c = F(1)
         elif c is None:
             frac_b = F(1)
-            frac_c = F(bc)
+            frac_c = bc if isinstance(bc, F) else F(bc)
         else:
-            frac_b = F(bc)
-            frac_c = F(1) if not frac_b else F(c)
+            frac_b = bc if isinstance(bc, F) else F(bc)
+            frac_c = F(1) if not frac_b else c if isinstance(c, F) else F(c)
 
         if frac_c < 0:
             raise ValueError(f"Negative radical {frac_c} not yet supported")
@@ -190,7 +190,9 @@ class ABSqrtC:
             radical = self.get_common_radical(o)
             return ABSqrtC(self._add + o._add, self._factor + o._factor, radical)
         if isinstance(o, _NumTypes):
-            return ABSqrtC(self._add + F(o), self._factor, self._radical)
+            return ABSqrtC(
+                self._add + o if isinstance(o, F) else F(o), self._factor, self._radical
+            )
         return NotImplemented
 
     def __radd__(self, o: object) -> ABSqrtC:
@@ -198,7 +200,7 @@ class ABSqrtC:
             radical = o.get_common_radical(self)
             return ABSqrtC(o._add + self._add, o._factor + self._factor, radical)
         if isinstance(o, _NumTypes):
-            return ABSqrtC(F(o) + self._add, self._factor, self._radical)
+            return ABSqrtC(o if isinstance(o, F) else F(o) + self._add, self._factor, self._radical)
         return NotImplemented
 
     def __sub__(self, o: object) -> ABSqrtC:
@@ -206,7 +208,7 @@ class ABSqrtC:
             radical = self.get_common_radical(o)
             return ABSqrtC(self._add - o._add, self._factor - o._factor, radical)
         if isinstance(o, _NumTypes):
-            return ABSqrtC(self._add - F(o), self._factor, self._radical)
+            return ABSqrtC(self._add - o if isinstance(o, F) else F(o), self._factor, self._radical)
         return NotImplemented
 
     def __rsub__(self, o: object) -> ABSqrtC:
@@ -214,7 +216,7 @@ class ABSqrtC:
             radical = o.get_common_radical(self)
             return ABSqrtC(o._add - self._add, o._factor - self._factor, radical)
         if isinstance(o, _NumTypes):
-            return ABSqrtC(F(o) - self._add, -self._factor, self._radical)
+            return ABSqrtC(o if isinstance(o, F) else F(o) - self._add, -self._factor, self._radical)
         return NotImplemented
 
     def __mul__(self, o: object) -> ABSqrtC:
@@ -226,7 +228,7 @@ class ABSqrtC:
                 radical,
             )
         if isinstance(o, _NumTypes):
-            f_o = F(o)
+            f_o = o if isinstance(o, F) else F(o)
             return ABSqrtC(self._add * f_o, self._factor * f_o, self._radical)
         return NotImplemented
 
@@ -239,7 +241,7 @@ class ABSqrtC:
                 radical,
             )
         if isinstance(o, _NumTypes):
-            f_o = F(o)
+            f_o = o if isinstance(o, F) else F(o)
             return ABSqrtC(f_o * self._add, f_o * self._factor, self._radical)
         return NotImplemented
 
@@ -253,7 +255,7 @@ class ABSqrtC:
                 radical,
             )
         if isinstance(o, _NumTypes):
-            f_o = F(o)
+            f_o = o if isinstance(o, F) else F(o)
             return ABSqrtC(self._add / f_o, self._factor / f_o, self._radical)
         return NotImplemented
 
@@ -268,7 +270,7 @@ class ABSqrtC:
                 radical,
             )
         if isinstance(o, _NumTypes):
-            factor = F(o) / self._conjugate_product
+            factor = o if isinstance(o, F) else F(o) / self._conjugate_product
             return ABSqrtC(factor * self._add, -factor * self._factor, self._radical)
         return NotImplemented
 
@@ -368,6 +370,13 @@ def _get_square_factors(n: F) -> tuple[F, int]:
             n_int //= square
 
     return square_factor, n_int
+
+
+def _fraction(n: _InputTypesUnion) -> F:
+    """
+    Convert a number to fractions.Fraction
+    """
+    return n if isinstance(n, F) else F(n)
 
 
 _NumTypes = (D, F, int, str)
