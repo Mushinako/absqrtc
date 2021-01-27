@@ -54,6 +54,8 @@ class TestInstance:
 
     def test_str(self):
         assert str(ABSqrtC(1, 0, 1)) == "1"
+        assert str(ABSqrtC(0, 1, 2)) == "√2"
+        assert str(ABSqrtC(0, -1, 2)) == "-√2"
         assert str(ABSqrtC(1, 1, 2)) == "1 + √2"
         assert str(ABSqrtC(1, 2, 2)) == "1 + 2 * √2"
         assert str(ABSqrtC(-1, -2, 2)) == "-1 - 2 * √2"

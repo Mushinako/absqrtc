@@ -8,7 +8,7 @@ from decimal import Decimal as D
 from fractions import Fraction as F
 from functools import cached_property
 from itertools import count
-from math import ceil, comb, floor, sqrt, trunc
+from math import comb, sqrt
 from numbers import Real
 from typing import Optional, Union, overload
 
@@ -114,12 +114,13 @@ class ABSqrtC:
         type(self)._cache.pop((self._add, self._factor, self._radical), None)
 
     def __str__(self) -> str:
-        string = str(self._add)
-
         if not self._factor:
-            return string
+            return f"{self._add or 0}"
 
-        string += " + " if self._factor > 0 else " - "
+        if self._add:
+            string = f"{self._add} {'+' if self._factor > 0 else '-'} "
+        else:
+            string = "" if self._factor > 0 else "-"
 
         if self._factor_abs != 1:
             string += f"{self._factor_abs} * "
@@ -191,7 +192,9 @@ class ABSqrtC:
             return ABSqrtC(self._add + o._add, self._factor + o._factor, radical)
         if isinstance(o, _NumTypes):
             return ABSqrtC(
-                self._add + o if isinstance(o, F) else F(o), self._factor, self._radical
+                self._add + (o if isinstance(o, F) else F(o)),
+                self._factor,
+                self._radical,
             )
         return NotImplemented
 
@@ -200,7 +203,11 @@ class ABSqrtC:
             radical = o.get_common_radical(self)
             return ABSqrtC(o._add + self._add, o._factor + self._factor, radical)
         if isinstance(o, _NumTypes):
-            return ABSqrtC(o if isinstance(o, F) else F(o) + self._add, self._factor, self._radical)
+            return ABSqrtC(
+                (o if isinstance(o, F) else F(o)) + self._add,
+                self._factor,
+                self._radical,
+            )
         return NotImplemented
 
     def __sub__(self, o: object) -> ABSqrtC:
@@ -208,7 +215,11 @@ class ABSqrtC:
             radical = self.get_common_radical(o)
             return ABSqrtC(self._add - o._add, self._factor - o._factor, radical)
         if isinstance(o, _NumTypes):
-            return ABSqrtC(self._add - o if isinstance(o, F) else F(o), self._factor, self._radical)
+            return ABSqrtC(
+                self._add - (o if isinstance(o, F) else F(o)),
+                self._factor,
+                self._radical,
+            )
         return NotImplemented
 
     def __rsub__(self, o: object) -> ABSqrtC:
@@ -216,7 +227,11 @@ class ABSqrtC:
             radical = o.get_common_radical(self)
             return ABSqrtC(o._add - self._add, o._factor - self._factor, radical)
         if isinstance(o, _NumTypes):
-            return ABSqrtC(o if isinstance(o, F) else F(o) - self._add, -self._factor, self._radical)
+            return ABSqrtC(
+                (o if isinstance(o, F) else F(o)) - self._add,
+                -self._factor,
+                self._radical,
+            )
         return NotImplemented
 
     def __mul__(self, o: object) -> ABSqrtC:
@@ -270,7 +285,7 @@ class ABSqrtC:
                 radical,
             )
         if isinstance(o, _NumTypes):
-            factor = o if isinstance(o, F) else F(o) / self._conjugate_product
+            factor = (o if isinstance(o, F) else F(o)) / self._conjugate_product
             return ABSqrtC(factor * self._add, -factor * self._factor, self._radical)
         return NotImplemented
 
@@ -313,14 +328,10 @@ class ABSqrtC:
         return self._value
 
     def __int__(self) -> int:
-        return int(self._value)
+        return self._value.__int__()
 
     @overload
-    def __round__(self) -> int:
-        ...
-
-    @overload
-    def __round__(self, ndigits: None) -> int:
+    def __round__(self, ndigits: None = ...) -> int:
         ...
 
     @overload
@@ -328,16 +339,16 @@ class ABSqrtC:
         ...
 
     def __round__(self, ndigits: Optional[int] = None) -> Union[int, float]:
-        return round(self._value, ndigits)
+        return self._value.__round__(ndigits)
 
     def __trunc__(self) -> int:
-        return trunc(self._value)
+        return self._value.__trunc__()
 
     def __floor__(self) -> int:
-        return floor(self._value)
+        return self._value.__floor__()
 
     def __ceil__(self) -> int:
-        return ceil(self._value)
+        return self._value.__ceil__()
 
     def get_common_radical(self, o: ABSqrtC) -> int:
         """
@@ -370,13 +381,6 @@ def _get_square_factors(n: F) -> tuple[F, int]:
             n_int //= square
 
     return square_factor, n_int
-
-
-def _fraction(n: _InputTypesUnion) -> F:
-    """
-    Convert a number to fractions.Fraction
-    """
-    return n if isinstance(n, F) else F(n)
 
 
 _NumTypes = (D, F, int, str)

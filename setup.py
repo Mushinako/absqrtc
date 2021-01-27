@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fp:
 
 setuptools.setup(
     name="absqrtc",
-    version="2021.04",
+    version="2021.05",
     author="Mushinako",
     author_email="ridoedee@gmail.com",
     description="a + b sqrt(c) calculations",
