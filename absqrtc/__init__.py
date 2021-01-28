@@ -130,6 +130,9 @@ class ABSqrtC:
     def __repr__(self) -> str:
         return f"ABSqrtC({self})"
 
+    def __format__(self, format_spec: str) -> str:
+        return self._value.__format__(format_spec)
+
     def __eq__(self, o: object) -> bool:
         if isinstance(o, ABSqrtC):
             return (
@@ -181,10 +184,10 @@ class ABSqrtC:
         return NotImplemented
 
     def __hash__(self) -> int:
-        return hash(self._value)
+        return self._value.__hash__()
 
     def __bool__(self) -> bool:
-        return bool(self._value)
+        return self._value.__bool__()
 
     def __add__(self, o: object) -> ABSqrtC:
         if isinstance(o, ABSqrtC):
@@ -322,7 +325,7 @@ class ABSqrtC:
         return ABSqrtC(self._add, -self._factor, self._radical)
 
     def __complex__(self) -> complex:
-        return complex(self._value)
+        return self._value + 0j
 
     def __float__(self) -> float:
         return self._value
