@@ -128,7 +128,7 @@ class ABSqrtC:
         return string + f"√{self._radical}"
 
     def __repr__(self) -> str:
-        return f"ABSqrtC({self})"
+        return f"ABSqrtC({str(self)})"
 
     def __format__(self, format_spec: str) -> str:
         return self._value.__format__(format_spec)
